@@ -66,9 +66,9 @@ public class BallisticModel {
     }
     public double calculateTheoreticalHeight() {
         var initialYVelocity = getInitialYVelocity();
-        var theoreticalTime = calculateTheoreticalTime();
-        // Vy0 * t
-        return initialYVelocity * theoreticalTime;
+        var initialHeight = getInitialHeight();
+        // h + Vy0^2 / 2g
+        return initialHeight + Math.pow(initialYVelocity, 2) / (2 * Physics.G);
     }
 
     public double getExperimentalTimeLowerBound() {

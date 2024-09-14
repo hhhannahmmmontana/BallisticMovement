@@ -16,26 +16,30 @@ public final class BMApplication extends Application {
     public void start(Stage stage) throws Exception {
         double velocity = 10;
         double height = 0;
-        double angle = Math.toRadians(125);
-        int extraSpace = 10;
+        double angle = Math.toRadians(90);
+        double minSize = 1;
         BallisticModel model = new BallisticModel(angle, height, velocity);
 
         var xAxis = new NumberAxis();
         xAxis.setLabel("x, м");
         xAxis.setAutoRanging(false);
+
+        double graphLength = Math.max(Math.abs(Math.ceil(model.calculateTheoreticalDistance() * 1.3)), minSize);
         if (model.isXVelocityPositive()) {
             xAxis.setLowerBound(0);
-            xAxis.setUpperBound(Math.ceil(model.calculateTheoreticalDistance() * 1.3) + extraSpace);
+            xAxis.setUpperBound(graphLength);
         } else {
-            xAxis.setLowerBound(Math.ceil(model.calculateTheoreticalDistance() * 1.3) + extraSpace);
+            xAxis.setLowerBound(-graphLength);
             xAxis.setUpperBound(0);
         }
 
         var yAxis = new NumberAxis();
         yAxis.setLabel("y, м");
         yAxis.setAutoRanging(false);
+
+        double graphHeight = Math.max(Math.ceil(model.calculateTheoreticalHeight()), minSize);
         yAxis.setLowerBound(0);
-        yAxis.setUpperBound(Math.ceil(model.calculateTheoreticalHeight() * 1.3) + extraSpace);
+        yAxis.setUpperBound(graphHeight);
 
         var graph = new LineChart<>(xAxis, yAxis);
         graph.setCreateSymbols(false);
@@ -55,7 +59,7 @@ public final class BMApplication extends Application {
                 } else {
                     System.out.println("[" + model.getExperimentalTimeLowerBound() + ", " + model.getExperimentalTimeUpperBound() + "]");
                 }
-                System.out.println();
+                System.out.println(model.calculateTheoreticalTime());
             }
         };
         anim.start();
