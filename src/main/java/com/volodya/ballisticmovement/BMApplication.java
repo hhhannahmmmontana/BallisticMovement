@@ -14,9 +14,10 @@ public final class BMApplication extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
+        stage.setTitle("Баллистическое движение");
         double velocity = 10;
         double height = 0;
-        double angle = Math.toRadians(90);
+        double angle = Math.toRadians(45);
         double minSize = 1;
         BallisticModel model = new BallisticModel(angle, height, velocity);
 
@@ -59,7 +60,6 @@ public final class BMApplication extends Application {
                 } else {
                     System.out.println("[" + model.getExperimentalTimeLowerBound() + ", " + model.getExperimentalTimeUpperBound() + "]");
                 }
-                System.out.println(model.calculateTheoreticalTime());
             }
         };
         anim.start();

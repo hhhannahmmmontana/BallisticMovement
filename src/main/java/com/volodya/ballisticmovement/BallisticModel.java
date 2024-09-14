@@ -5,7 +5,7 @@ import com.volodya.ballisticmovement.types.Pair;
 
 import java.util.ArrayList;
 
-public class BallisticModel {
+public final class BallisticModel {
     final ArrayList<FrameInfo> frames = new ArrayList<>();
     private final double horizontalVelocity;
 
@@ -26,6 +26,9 @@ public class BallisticModel {
     }
     public FrameInfo getLastFrame() {
         return frames.getLast();
+    }
+    public FrameInfo getPrevFrame() {
+        return frames.get(frames.size() - 2);
     }
 
     public double getX() {
@@ -94,6 +97,10 @@ public class BallisticModel {
     public boolean isFlying() {
         return getLastFrame().getVelocity() > 0 || getLastFrame().getY() > 0;
     }
+    public boolean isFalling() {
+        return getPrevFrame().getY() > getLastFrame().getY();
+    }
+
     public void applyVelocity() {
         frames.add(new FrameInfo(calculateNewX(), calculateNewY(), calculateNewYVelocity()));
     }
