@@ -17,19 +17,46 @@ public final class BMApplication extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
-        BallisticModel model = new BallisticModel(45, 2, 10);
-        Text textField = new Text(Double.toString(model.getLastFrame().getVelocity()));
+        double velocity = 10;
+        double height = 0;
+        double angle = Math.toRadians(45);
+
+        var xAxis = new NumberAxis();
+        xAxis.setLabel("x, м");
+        xAxis.setAutoRanging(false);
+        double w = (Math.pow(velocity, 2) * Math.sin(2 * angle)) / Physics.G;
+        xAxis.setLowerBound(0);
+        xAxis.setUpperBound(w + w / 3);
+
+        var yAxis = new NumberAxis();
+        yAxis.setLabel("y, м");
+        yAxis.setAutoRanging(false);
+        double h = (Math.pow(velocity, 2) * Math.pow(Math.sin(angle), 2)) / (2 * Physics.G);
+        yAxis.setUpperBound(Math.ceil(h + h / 3));
+        yAxis.setLowerBound(0);
+
+        var graph = new LineChart<>(xAxis, yAxis);
+        graph.setCreateSymbols(false);
+        graph.setLegendVisible(false);
+        graph.getXAxis().setAnimated(false);
+        var dots = new XYChart.Series<Number, Number>();
+        graph.getData().add(dots);
+
+        BallisticModel model = new BallisticModel(angle, height, velocity);
+        dots.getData().add(new XYChart.Data<>(model.getLastFrame().getX(), model.getLastFrame().getY()));
         AnimationTimer anim = new AnimationTimer() {
+            double frame = 0;
             @Override
             public void handle(long l) {
                 if (model.isFlying()) {
                     model.applyVelocity();
-                    textField.setText(Double.toString(model.getLastFrame().getVelocity()));
+                    dots.getData().add(new XYChart.Data<>(model.getLastFrame().getX(), model.getLastFrame().getY()));
+                    ++frame;
                 }
             }
         };
         anim.start();
-        final var scene = new Scene(new StackPane(textField), WINDOW_WIDTH, WINDOW_HEIGHT);
+        final var scene = new Scene(new StackPane(graph), WINDOW_WIDTH, WINDOW_HEIGHT);
         stage.setScene(scene);
         stage.show();
     }

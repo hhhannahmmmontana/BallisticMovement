@@ -10,7 +10,7 @@ public class BallisticModel {
     BallisticModel(double angle, double height, double velocity) {
         this.angle = angle;
         horizontalVelocity = velocity * Math.cos(angle);
-        frames.add(new FrameInfo(velocity * Math.sin(angle), height, velocity));
+        frames.add(new FrameInfo(0, height, velocity * Math.sin(angle)));
     }
     private double calculateX() {
         return getLastFrame().getX() + horizontalVelocity / BMApplication.APPROX_FPS;
@@ -19,10 +19,10 @@ public class BallisticModel {
         return getLastFrame().getY() + verticalVelocity / BMApplication.APPROX_FPS;
     }
     private double calculateVelocity() {
-        return getLastFrame().getVelocity() - PhysicsConstants.g / BMApplication.APPROX_FPS;
+        return getLastFrame().getVelocity() - Physics.G / BMApplication.APPROX_FPS;
     }
     boolean isFlying() {
-        return getLastFrame().getY() > 0;
+        return getLastFrame().getVelocity() > 0 || getLastFrame().getY() > 0;
     }
     FrameInfo getLastFrame() {
         return frames.getLast();
@@ -31,17 +31,6 @@ public class BallisticModel {
         double verticalVelocity = calculateVelocity();
         double x = calculateX();
         double y = calculateY(verticalVelocity);
-        if (y > 0 || getLastFrame().getY() > 0) {
-            if (y <= 0) {
-                y = 0;
-                verticalVelocity = 0;
-            }
-            frames.add(new FrameInfo(
-                    calculateX(),
-                    calculateY(verticalVelocity),
-                    verticalVelocity
-            ));
-        }
-
+        frames.add(new FrameInfo(x, y, verticalVelocity));
     }
 }
