@@ -6,4 +6,6 @@ module com.volodya.ballisticmovement {
 
     opens com.volodya.ballisticmovement to javafx.fxml;
     exports com.volodya.ballisticmovement;
+    exports com.volodya.ballisticmovement.types;
+    opens com.volodya.ballisticmovement.types to javafx.fxml;
 }

@@ -1,22 +1,22 @@
-package com.volodya.ballisticmovement;
+package com.volodya.ballisticmovement.types;
 
 public final class FrameInfo {
     private final double verticalVelocity;
     private final double x;
     private final double y;
 
-    FrameInfo(double x, double y, double velocity) {
+    public FrameInfo(double x, double y, double velocity) {
         this.x = x;
         this.y = y;
         this.verticalVelocity = velocity;
     }
-    double getX() {
+    public double getX() {
         return x;
     }
-    double getY() {
+    public double getY() {
         return y;
     }
-    double getVelocity() {
+    public double getVelocity() {
         return verticalVelocity;
     }
 }

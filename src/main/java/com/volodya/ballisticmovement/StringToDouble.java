@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
 
 public final class StringToDouble {
     private final static Pattern INPUT_DOUBLE_PATTERN = Pattern.compile("(0|([1-9][0-9]*))?([.,][0-9]*E?[1-9]?[0-9]*?)?");
-    final static Pattern DOUBLE_PATTERN = Pattern.compile("(0|([1-9][0-9]*))(\\.[0-9]+(E[1-9][0-9]*)?)?");
+    public final static Pattern DOUBLE_PATTERN = Pattern.compile("(0|([1-9][0-9]*))(\\.[0-9]+(E[1-9][0-9]*)?)?");
 
     private final static UnaryOperator<TextFormatter.Change> DOUBLE_FILTER = c -> {
         String text = c.getControlNewText();

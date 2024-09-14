@@ -1,36 +1,100 @@
 package com.volodya.ballisticmovement;
 
+import com.volodya.ballisticmovement.types.FrameInfo;
+import com.volodya.ballisticmovement.types.Pair;
+
 import java.util.ArrayList;
 
 public class BallisticModel {
     final ArrayList<FrameInfo> frames = new ArrayList<>();
-    final double horizontalVelocity;
-    double angle;
+    private final double horizontalVelocity;
 
-    BallisticModel(double angle, double height, double velocity) {
-        this.angle = angle;
+    public BallisticModel(double angle, double height, double velocity) {
         horizontalVelocity = velocity * Math.cos(angle);
         frames.add(new FrameInfo(0, height, velocity * Math.sin(angle)));
     }
-    private double calculateX() {
-        return getLastFrame().getX() + horizontalVelocity / BMApplication.APPROX_FPS;
+
+    public boolean isXVelocityPositive() {
+        return horizontalVelocity > 0;
     }
-    private double calculateY(double verticalVelocity) {
-        return getLastFrame().getY() + verticalVelocity / BMApplication.APPROX_FPS;
+
+    public FrameInfo getFirstFrame() {
+        return frames.getFirst();
     }
-    private double calculateVelocity() {
-        return getLastFrame().getVelocity() - Physics.G / BMApplication.APPROX_FPS;
+    public FrameInfo getFrame(int id) {
+        return frames.get(id);
     }
-    boolean isFlying() {
-        return getLastFrame().getVelocity() > 0 || getLastFrame().getY() > 0;
-    }
-    FrameInfo getLastFrame() {
+    public FrameInfo getLastFrame() {
         return frames.getLast();
     }
+
+    public double getX() {
+        return getLastFrame().getX();
+    }
+    public double getY() {
+        return getLastFrame().getY();
+    }
+    public double getVelocity() {
+        return getLastFrame().getVelocity();
+    }
+
+    public double getInitialHeight() {
+        return getFirstFrame().getY();
+    }
+    public double getHorizontalVelocity() {
+        return horizontalVelocity;
+    }
+    public double getInitialYVelocity() {
+        return getFirstFrame().getVelocity();
+    }
+
+    public double calculateTheoreticalTime() {
+        var initialYVelocity = getInitialYVelocity();
+        var initialHeight = getInitialHeight();
+        // (Vy0 + (Vy0^2 + 2gh)) / g
+        return (
+                (initialYVelocity +
+                        Math.sqrt(Math.pow(initialYVelocity, 2) +
+                        2 * Physics.G * initialHeight)
+                )
+                / Physics.G
+        );
+    }
+    public double calculateTheoreticalDistance() {
+        // Vx * t
+        return horizontalVelocity * calculateTheoreticalTime();
+    }
+    public double calculateTheoreticalHeight() {
+        var initialYVelocity = getInitialYVelocity();
+        var theoreticalTime = calculateTheoreticalTime();
+        // Vy0 * t
+        return initialYVelocity * theoreticalTime;
+    }
+
+    public double getExperimentalTimeLowerBound() {
+        return Math.max(0.0, ((double) (frames.size() - 2)) / BMApplication.FPS);
+    }
+    public double getExperimentalTimeUpperBound() {
+        return ((double) (frames.size() - 1)) / BMApplication.FPS;
+    }
+    public Pair<Double, Double> getExperimentalTime() {
+        return new Pair<>(getExperimentalTimeLowerBound(), getExperimentalTimeUpperBound());
+    }
+
+    private double calculateNewYVelocity() {
+        return getLastFrame().getVelocity() - Physics.G / BMApplication.FPS;
+    }
+    private double calculateNewX() {
+        return getLastFrame().getX() + horizontalVelocity / BMApplication.FPS;
+    }
+    private double calculateNewY() {
+        return getLastFrame().getY() + calculateNewYVelocity() / BMApplication.FPS;
+    }
+
+    public boolean isFlying() {
+        return getLastFrame().getVelocity() > 0 || getLastFrame().getY() > 0;
+    }
     public void applyVelocity() {
-        double verticalVelocity = calculateVelocity();
-        double x = calculateX();
-        double y = calculateY(verticalVelocity);
-        frames.add(new FrameInfo(x, y, verticalVelocity));
+        frames.add(new FrameInfo(calculateNewX(), calculateNewY(), calculateNewYVelocity()));
     }
 }
