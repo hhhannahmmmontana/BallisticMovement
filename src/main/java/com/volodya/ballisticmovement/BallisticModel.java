@@ -8,10 +8,20 @@ import java.util.ArrayList;
 public final class BallisticModel {
     final ArrayList<FrameInfo> frames = new ArrayList<>();
     private final double horizontalVelocity;
+    private double fps;
 
-    public BallisticModel(double angle, double height, double velocity) {
+    public BallisticModel(double angle, double height, double velocity, double fps) {
+        angle = Math.toRadians(angle);
         horizontalVelocity = velocity * Math.cos(angle);
         frames.add(new FrameInfo(0, height, velocity * Math.sin(angle)));
+        this.fps = fps;
+    }
+
+    double getFps() {
+        return fps;
+    }
+    void setFps(double fps) {
+        this.fps = fps;
     }
 
     public boolean isXVelocityPositive() {
@@ -73,25 +83,28 @@ public final class BallisticModel {
         // h + Vy0^2 / 2g
         return initialHeight + Math.pow(initialYVelocity, 2) / (2 * Physics.G);
     }
+    public int calculateMaxFramesAmount() {
+        return (int) Math.ceil(calculateTheoreticalTime() * fps);
+    }
 
     public double getExperimentalTimeLowerBound() {
-        return Math.max(0.0, ((double) (frames.size() - 2)) / BMApplication.FPS);
+        return Math.max(0.0, ((double) (frames.size() - 2)) / fps);
     }
     public double getExperimentalTimeUpperBound() {
-        return ((double) (frames.size() - 1)) / BMApplication.FPS;
+        return ((double) (frames.size() - 1)) / fps;
     }
     public Pair<Double, Double> getExperimentalTime() {
         return new Pair<>(getExperimentalTimeLowerBound(), getExperimentalTimeUpperBound());
     }
 
     private double calculateNewYVelocity() {
-        return getLastFrame().getVelocity() - Physics.G / BMApplication.FPS;
+        return getLastFrame().getVelocity() - Physics.G / fps;
     }
     private double calculateNewX() {
-        return getLastFrame().getX() + horizontalVelocity / BMApplication.FPS;
+        return getLastFrame().getX() + horizontalVelocity / fps;
     }
     private double calculateNewY() {
-        return getLastFrame().getY() + calculateNewYVelocity() / BMApplication.FPS;
+        return getLastFrame().getY() + calculateNewYVelocity() / fps;
     }
 
     public boolean isFlying() {
@@ -99,6 +112,9 @@ public final class BallisticModel {
     }
     public boolean isFalling() {
         return getPrevFrame().getY() > getLastFrame().getY();
+    }
+    boolean peak() {
+        return getLastFrame().getVelocity() >= 0 && calculateNewYVelocity() < 0;
     }
 
     public void applyVelocity() {

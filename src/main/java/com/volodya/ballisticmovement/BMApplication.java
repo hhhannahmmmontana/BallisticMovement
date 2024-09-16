@@ -1,69 +1,56 @@
 package com.volodya.ballisticmovement;
 
+import com.volodya.ballisticmovement.types.FrameInfo;
+import com.volodya.ballisticmovement.view.BallisticGraph;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.chart.*;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 public final class BMApplication extends Application {
     final static double WINDOW_WIDTH = 666.666;
     final static double WINDOW_HEIGHT = 500;
-    static int FPS = 60;
 
     @Override
-    public void start(Stage stage) throws Exception {
-        stage.setTitle("Баллистическое движение");
-        double velocity = 10;
-        double height = 0;
-        double angle = Math.toRadians(45);
-        double minSize = 1;
-        BallisticModel model = new BallisticModel(angle, height, velocity);
+    public void start(Stage stage) {
+        double angle = 60;
+        double height = 100;
+        double velocity = 1000;
+        int fps = 10;
 
-        var xAxis = new NumberAxis();
-        xAxis.setLabel("x, м");
-        xAxis.setAutoRanging(false);
+        BallisticModel model = new BallisticModel(angle, height, velocity, fps);
+        var graph = new BallisticGraph(model.calculateTheoreticalDistance(), model.calculateTheoreticalHeight());
+        StackPane.setAlignment(graph, Pos.TOP_CENTER);
+        StackPane.setMargin(graph, new Insets(10, 0, 0, 0));
 
-        double graphLength = Math.max(Math.abs(Math.ceil(model.calculateTheoreticalDistance() * 1.3)), minSize);
-        if (model.isXVelocityPositive()) {
-            xAxis.setLowerBound(0);
-            xAxis.setUpperBound(graphLength);
-        } else {
-            xAxis.setLowerBound(-graphLength);
-            xAxis.setUpperBound(0);
-        }
+        StackPane root = new StackPane(graph);
+        root.setPrefSize(WINDOW_WIDTH, WINDOW_HEIGHT);
+        root.setBackground(Background.fill(Color.LIGHTGRAY));
+        graph.adjustSize(root);
+        graph.setFrame(model.frames, model.calculateMaxFramesAmount());
 
-        var yAxis = new NumberAxis();
-        yAxis.setLabel("y, м");
-        yAxis.setAutoRanging(false);
-
-        double graphHeight = Math.max(Math.ceil(model.calculateTheoreticalHeight()), minSize);
-        yAxis.setLowerBound(0);
-        yAxis.setUpperBound(graphHeight);
-
-        var graph = new LineChart<>(xAxis, yAxis);
-        graph.setCreateSymbols(false);
-        graph.setLegendVisible(false);
-        var dots = new XYChart.Series<Number, Number>();
-        graph.getData().add(dots);
-
-        dots.getData().add(new XYChart.Data<>(model.getX(), model.getY()));
-        AnimationTimer anim = new AnimationTimer() {
-            double frame = 0;
+        AnimationTimer animation = new AnimationTimer() {
             @Override
             public void handle(long l) {
                 if (model.isFlying()) {
                     model.applyVelocity();
-                    dots.getData().add(new XYChart.Data<>(model.getX(), model.getY()));
-                    ++frame;
-                } else {
-                    System.out.println("[" + model.getExperimentalTimeLowerBound() + ", " + model.getExperimentalTimeUpperBound() + "]");
+                    if (model.peak()) {
+                        graph.addMark(model.getPrevFrame());
+                    }
                 }
+                graph.adjustSize(root);
+                graph.setFrame(model.frames, model.calculateMaxFramesAmount());
             }
         };
-        anim.start();
-        final var scene = new Scene(new StackPane(graph), WINDOW_WIDTH, WINDOW_HEIGHT);
+
+        animation.start();
+        Scene scene = new Scene(root);
         stage.setScene(scene);
         stage.show();
     }
