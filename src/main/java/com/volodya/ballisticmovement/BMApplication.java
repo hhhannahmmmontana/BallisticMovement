@@ -19,7 +19,7 @@ public final class BMApplication extends Application {
 
     @Override
     public void start(Stage stage) {
-        double angle = 60;
+        double angle = 45;
         double height = 100;
         double velocity = 1000;
         int fps = 10;
@@ -27,7 +27,7 @@ public final class BMApplication extends Application {
         BallisticModel model = new BallisticModel(angle, height, velocity, fps);
         var graph = new BallisticGraph(model.calculateTheoreticalDistance(), model.calculateTheoreticalHeight());
         StackPane.setAlignment(graph, Pos.TOP_CENTER);
-        StackPane.setMargin(graph, new Insets(10, 0, 0, 0));
+        StackPane.setMargin(graph, new Insets(20, 0, 0, 0));
 
         StackPane root = new StackPane(graph);
         root.setPrefSize(WINDOW_WIDTH, WINDOW_HEIGHT);

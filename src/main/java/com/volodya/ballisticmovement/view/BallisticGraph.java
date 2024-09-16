@@ -19,7 +19,9 @@ public final class BallisticGraph extends StackPane {
     private static final double DEFAULT_NEGATIVE_AXIS_MAXVALUE = -1;
     private static final double GRAPH_EXPANSION = 1.05;
     private static final double X_TEXT_MARGIN = 3;
-    private static final double Y_TEXT_MARGIN = 0;
+    private static final double Y_TEXT_MARGIN = 5;
+    private static final double X_MAX_TEXT_MARGIN = 5;
+    private static final double Y_MAX_TEXT_MARGIN = 3;
     private static final double MARGIN = 5;
     private static final Color BACKGROUND_COLOR = Color.WHITE;
     private static final Color DATA_COLOR = Color.BLACK;
@@ -34,38 +36,65 @@ public final class BallisticGraph extends StackPane {
 
     public BallisticGraph(double maxDistance, double maxHeight) {
         this.setBackground(Background.fill(Color.TRANSPARENT));
+        xStart = 0;
         if (maxDistance >= 0) {
-            xStart = 0;
             xEnd = Math.max(maxDistance * GRAPH_EXPANSION, DEFAULT_POSITIVE_AXIS_MAXVALUE);
         } else {
-            xStart = Math.min(maxDistance * GRAPH_EXPANSION, DEFAULT_NEGATIVE_AXIS_MAXVALUE);
-            xEnd = 0;
+            xEnd = Math.min(maxDistance * GRAPH_EXPANSION, DEFAULT_NEGATIVE_AXIS_MAXVALUE);
         }
         yEnd = Math.max(maxHeight * GRAPH_EXPANSION, DEFAULT_POSITIVE_AXIS_MAXVALUE);
     }
 
-    private StackPane makeGraph() {
-        StackPane graph = new StackPane();
+    private Text getText(double value) {
+        final var text = new Text(String.format("%.1f", value));
+        text.setFont(new Font(10));
+        text.setFill(DATA_COLOR);
+        return text;
+    }
+
+    private Pane makeGraph() {
+        final var graph = new Pane();
+        graph.setPrefSize(getWidth(), getHeight());
         graph.setBackground(Background.fill(BACKGROUND_COLOR));
+        final var xAxis = new Pane();
+        final var yAxis = new Pane();
 
-        StackPane xAxis = new StackPane();
-        StackPane yAxis = new StackPane();
+        xAxis.relocate(0, getHeight());
+        yAxis.relocate(0, 0);
 
-        Line xAxisLine = new Line(0, 0, getWidth() - GRAPH_AXIS_WIDTH, 0);
+        final var xAxisLine = new Line(0, 0, getWidth() - GRAPH_AXIS_WIDTH, 0);
         xAxisLine.setStroke(DATA_COLOR);
         xAxisLine.setStrokeWidth(GRAPH_AXIS_WIDTH);
         StackPane.setAlignment(xAxisLine, Pos.BOTTOM_LEFT);
-        xAxis.getChildren().add(xAxisLine);
 
-        Line yAxisLine = new Line(0, 0, 0, getHeight() - GRAPH_AXIS_WIDTH);;
+        final var xText = getText(xEnd);
+        final Bounds xTextBounds = xText.getBoundsInParent();
+        if (xEnd >= 0) {
+            xText.relocate(
+                    xAxisLine.getEndX() + X_MAX_TEXT_MARGIN,
+                    xAxisLine.getStartY() - xTextBounds.getHeight() / 2
+            );
+        } else {
+            xText.relocate(
+                    0 - xTextBounds.getWidth() - X_MAX_TEXT_MARGIN,
+                    xAxisLine.getStartY() - xTextBounds.getHeight() / 2
+            );
+        }
+        xAxis.getChildren().add(xAxisLine);
+        xAxis.getChildren().add(xText);
+
+        final var yAxisLine = new Line(0, 0, 0, getHeight() - GRAPH_AXIS_WIDTH);;
         yAxisLine.setStroke(DATA_COLOR);
         yAxisLine.setStrokeWidth(GRAPH_AXIS_WIDTH);
-        if (xStart >= 0) {
-            StackPane.setAlignment(yAxisLine, Pos.TOP_LEFT);
-        } else {
-            StackPane.setAlignment(yAxisLine, Pos.TOP_RIGHT);
+        final var yText = getText(yEnd);
+        final Bounds yBounds = yText.getBoundsInParent();
+        yText.relocate(-yBounds.getWidth() / 2, -yBounds.getHeight() - Y_MAX_TEXT_MARGIN);
+        if (xEnd < 0) {
+            yText.setX(getWidth());
+            yAxisLine.relocate(getWidth(), 0);
         }
         yAxis.getChildren().add(yAxisLine);
+        yAxis.getChildren().add(yText);
 
         graph.getChildren().add(xAxis);
         graph.getChildren().add(yAxis);
@@ -73,37 +102,37 @@ public final class BallisticGraph extends StackPane {
     }
 
     public void adjustSize(Region root) {
-        double x = root.getWidth();
-        double y = root.getHeight();
+        final double x = root.getWidth();
+        final double y = root.getHeight();
         setMinSize(x - 2 * x / MARGIN, y - 2 * y / MARGIN);
         setMaxSize(x - 2 * x / MARGIN, y - 2 * y / MARGIN);
     }
 
     private double xMetersToPixels() {
-        return getWidth() / (xEnd - xStart);
+        return getWidth() / Math.abs(xEnd - xStart);
     }
     private double yMetersToPixels() {
-        return getHeight() / (yEnd - yStart);
+        return getHeight() / Math.abs(yEnd - yStart);
     }
 
     public void addMark(FrameInfo frame) {
         marks.add(frame);
     }
     private void applyMark(FrameInfo frame) {
-        double x = frame.getX();
-        double y = frame.getY();
+        final double x = frame.getX();
+        final double y = frame.getY();
 
-        double canvasX;
+        final double canvasX;
         if (x >= 0) {
             canvasX = x * xMetersToPixels();
         } else {
             canvasX = getWidth() + x * xMetersToPixels();
         }
 
-        double canvasY = getHeight() - y * yMetersToPixels();
-        Pane mark = new Pane();
+        final double canvasY = getHeight() - y * yMetersToPixels();
+        final var mark = new Pane();
 
-        Line xMark = new Line(
+        final var xMark = new Line(
                 canvasX,
                 getHeight() - MEASUREMENT_LENGTH,
                 canvasX,
@@ -112,16 +141,14 @@ public final class BallisticGraph extends StackPane {
         xMark.setStroke(DATA_COLOR);
         xMark.setStrokeWidth(GRAPH_AXIS_WIDTH);
 
-        Text xText = new Text(String.format("%.1f", x));
-        Bounds xBounds = xText.getBoundsInParent();
-        xText.setFont(new Font(10));
-        xText.setFill(DATA_COLOR);
+        final var xText = getText(x);
+        final Bounds xBounds = xText.getBoundsInParent();
         xText.relocate(xMark.getStartX() - xBounds.getWidth() / 2, xMark.getEndY() + X_TEXT_MARGIN);
 
         mark.getChildren().add(xMark);
         mark.getChildren().add(xText);
 
-        Line yMark;
+        final Line yMark;
         if (x >= 0) {
              yMark = new Line(
                     1,
@@ -140,10 +167,8 @@ public final class BallisticGraph extends StackPane {
         yMark.setStroke(DATA_COLOR);
         yMark.setStrokeWidth(GRAPH_AXIS_WIDTH);
 
-        Text yText = new Text(String.format("%.1f", y));
+        final var yText = getText(y);
         Bounds yBounds = yText.getBoundsInParent();
-        yText.setFont(new Font(10));
-        yText.setFill(DATA_COLOR);
         if (x >= 0) {
             yText.relocate(yMark.getStartX() - yBounds.getWidth() - Y_TEXT_MARGIN, yMark.getStartY() - yBounds.getHeight() / 2);
         } else {
@@ -158,7 +183,7 @@ public final class BallisticGraph extends StackPane {
 
     public void setFrame(ArrayList<FrameInfo> frames, int totalFramesAmount) {
         getChildren().clear();
-        var graph = makeGraph();
+        final var graph = makeGraph();
         getChildren().add(graph);
 
         final int trajectoryQuantity = 150;
@@ -166,13 +191,13 @@ public final class BallisticGraph extends StackPane {
         final double xMetersToPixels = xMetersToPixels();
         final double yMetersToPixels = yMetersToPixels();
 
-        Pane simulation = new Pane();
+        final var simulation = new Pane();
 
-        Circle obj = new Circle(OBJ_RADIUS, DATA_COLOR);
+        final var obj = new Circle(OBJ_RADIUS, DATA_COLOR);
         BallisticGraph.setAlignment(obj, Pos.TOP_LEFT);
         simulation.getChildren().add(obj);
 
-        double negative_k;
+        final double negative_k;
         if (frames.getLast().getX() >= 0) {
             negative_k = 0;
         } else {
@@ -211,7 +236,6 @@ public final class BallisticGraph extends StackPane {
         for (var m : marks) {
             applyMark(m);
         }
-
 
         BallisticGraph.setAlignment(simulation, Pos.TOP_LEFT);
         getChildren().add(simulation);
