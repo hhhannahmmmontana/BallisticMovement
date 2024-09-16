@@ -7,20 +7,25 @@ import java.util.ArrayList;
 
 public final class BallisticModel {
     final ArrayList<FrameInfo> frames = new ArrayList<>();
-    private final double horizontalVelocity;
-    private double fps;
+    private double initVelocity;
+    private double horizontalVelocity;
+    private int fps;
+    private double angle;
 
-    public BallisticModel(double angle, double height, double velocity, double fps) {
+    public BallisticModel(double angle, double height, double velocity, int fps) {
         angle = Math.toRadians(angle);
-        horizontalVelocity = velocity * Math.cos(angle);
+        initVelocity = velocity;
         frames.add(new FrameInfo(0, height, velocity * Math.sin(angle)));
         this.fps = fps;
     }
 
-    double getFps() {
+    private void calculateHorizontalVelocity() {
+        horizontalVelocity = initVelocity * Math.cos(angle);
+    }
+    int getFps() {
         return fps;
     }
-    void setFps(double fps) {
+    private void setFps(int fps) {
         this.fps = fps;
     }
 
@@ -39,6 +44,34 @@ public final class BallisticModel {
     }
     public FrameInfo getPrevFrame() {
         return frames.get(frames.size() - 2);
+    }
+    public int getFrameId() {
+        return frames.size() - 1;
+    }
+
+    private void recalculateVelocity() {
+        calculateHorizontalVelocity();
+        final var prevFrame = frames.getFirst();
+        frames.clear();
+        frames.add(new FrameInfo(prevFrame.getX(), prevFrame.getY(), initVelocity * Math.sin(angle)));
+    }
+    public void updateInitFps(int fps) {
+        final var prevFrame = frames.getFirst();
+        setFps(fps);
+        frames.add(new FrameInfo(prevFrame.getX(), prevFrame.getY(), prevFrame.getVelocity()));
+    }
+    public void updateInitAngle(double angle) {
+        this.angle = Math.toRadians(angle);
+        recalculateVelocity();
+    }
+    public void updateInitHeight(double height) {
+        final var prevFrame = frames.getFirst();
+        frames.clear();
+        frames.add(new FrameInfo(prevFrame.getX(), height, prevFrame.getVelocity()));
+    }
+    public void updateInitVelocity(double v) {
+        initVelocity = v;
+        recalculateVelocity();
     }
 
     public double getX() {
