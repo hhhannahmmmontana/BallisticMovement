@@ -27,22 +27,16 @@ public final class BallisticGraph extends StackPane {
     private static final Color DATA_COLOR = Color.BLACK;
     private static final double OBJ_RADIUS = 5;
 
-    private final double xStart;
-    private final double xEnd;
-    private final double yStart = 0;
-    private final double yEnd;
+    private double xStart;
+    private double xEnd;
+    private double yStart = 0;
+    private double yEnd;
 
     private final ArrayList<FrameInfo> marks = new ArrayList<>();
 
     public BallisticGraph(double maxDistance, double maxHeight) {
-        this.setBackground(Background.fill(Color.TRANSPARENT));
-        xStart = 0;
-        if (maxDistance >= 0) {
-            xEnd = Math.max(maxDistance * GRAPH_EXPANSION, DEFAULT_POSITIVE_AXIS_MAXVALUE);
-        } else {
-            xEnd = Math.min(maxDistance * GRAPH_EXPANSION, DEFAULT_NEGATIVE_AXIS_MAXVALUE);
-        }
-        yEnd = Math.max(maxHeight * GRAPH_EXPANSION, DEFAULT_POSITIVE_AXIS_MAXVALUE);
+        super();
+        setInit(maxDistance, maxHeight);
     }
 
     private Text getText(double value) {
@@ -239,5 +233,16 @@ public final class BallisticGraph extends StackPane {
 
         BallisticGraph.setAlignment(simulation, Pos.TOP_LEFT);
         getChildren().add(simulation);
+    }
+
+    public void setInit(double maxDistance, double maxHeight) {
+        this.setBackground(Background.fill(Color.TRANSPARENT));
+        xStart = 0;
+        if (maxDistance >= 0) {
+            xEnd = Math.max(maxDistance * GRAPH_EXPANSION, DEFAULT_POSITIVE_AXIS_MAXVALUE);
+        } else {
+            xEnd = Math.min(maxDistance * GRAPH_EXPANSION, DEFAULT_NEGATIVE_AXIS_MAXVALUE);
+        }
+        yEnd = Math.max(maxHeight * GRAPH_EXPANSION, DEFAULT_POSITIVE_AXIS_MAXVALUE);
     }
 }

@@ -9,6 +9,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
@@ -18,12 +19,33 @@ import javafx.stage.Stage;
 public final class BMApplication extends Application {
     final static double WINDOW_WIDTH = 666.666;
     final static double WINDOW_HEIGHT = 500;
+    final private static double DEFAULT_ANGLE = 45;
+    final private static double DEFAULT_HEIGHT = 2;
+    final private static double DEFAULT_VELOCITY = 30;
+    final private static int DEFAULT_FPS = 60;
+
+    private<T> TextField makeInput(TextFormatter<T> formatter) {
+        TextField textField = new TextField();
+        textField.setTextFormatter(formatter);
+        return textField;
+    }
+
+    private<T> VBox makeInputBox(String label, TextField textField) {
+        final var text = new Text(label);
+        return new VBox(text, textField);
+    }
+
+    private static void updateGraphs(BallisticModel model, BallisticGraph ballisticGraph, GraphsStage graphsStage) {
+        ballisticGraph.setInit(model.calculateTheoreticalDistance(), model.calculateTheoreticalHeight());
+        ballisticGraph.setFrame(model.getFrames(), model.calculateMaxFramesAmount());
+        graphsStage.initFrame(model);
+    }
 
     @Override
     public void start(Stage stage) {
         stage.setTitle("Баллистическое движение");
 
-        final var model = new BallisticModel(45, 2, 30, 60);
+        final var model = new BallisticModel(DEFAULT_ANGLE, DEFAULT_HEIGHT, DEFAULT_VELOCITY, DEFAULT_FPS);
         final var graph = new BallisticGraph(model.calculateTheoreticalDistance(), model.calculateTheoreticalHeight());
         StackPane.setAlignment(graph, Pos.TOP_CENTER);
         StackPane.setMargin(graph, new Insets(20, 0, 0, 0));
@@ -32,7 +54,7 @@ public final class BMApplication extends Application {
         root.setPrefSize(WINDOW_WIDTH, WINDOW_HEIGHT);
         root.setBackground(Background.fill(Color.LIGHTGRAY));
         graph.adjustSize(root);
-        graph.setFrame(model.frames, model.calculateMaxFramesAmount());
+        graph.setFrame(model.getFrames(), model.calculateMaxFramesAmount());
 
         final var graphsStage = new GraphsStage(model);
         graphsStage.setFrame(model.getFirstFrame(), model.getFrameId(), model.getFps());
@@ -40,50 +62,57 @@ public final class BMApplication extends Application {
         StackPane gui = new StackPane();
         boolean[] animationStarted = {false};
 
-        final var angleText = new Text("Угол, °");
-        TextField angle = new TextField("45.0");
-        angle.setTextFormatter(NumberPatterns.SIGNED_DOUBLE_FORMATTER);
-        angle.setOnAction(e -> {
-            model.updateInitAngle(Double.parseDouble(angle.getText()));
-        });
-        final var angleBox = new VBox(angleText, angle);
+        final var angleField = makeInput(NumberPatterns.makeSignedDoubleFormatter(DEFAULT_ANGLE));
+        final var angleBox = makeInputBox("Угол, °", angleField);
 
-        final var heightText = new Text("Высота, м");
-        TextField height = new TextField("2.0");
-        height.setTextFormatter(NumberPatterns.UNSIGNED_DOUBLE_FORMATTER);
-        height.setOnAction(e -> {
-            model.updateInitHeight(Double.parseDouble(height.getText()));
-        });
-        final var heightBox = new VBox(heightText, height);
+        final var heightField = makeInput(NumberPatterns.makeUnsignedDoubleFormatter(DEFAULT_HEIGHT));
+        final var heightBox = makeInputBox("Высота, м", heightField);
 
-        final var vText = new Text("Скорость, м/с");
-        final var v = new TextField("30.0");
-        v.setTextFormatter(NumberPatterns.UNSIGNED_DOUBLE_FORMATTER);
-        v.setOnAction(e -> {
-            model.updateInitVelocity(Double.parseDouble(v.getText()));
-        });
-        final var vBox = new VBox(vText, v);
+        final var velocityField = makeInput(NumberPatterns.makeUnsignedDoubleFormatter(DEFAULT_VELOCITY));
+        final var velocityBox = makeInputBox("Скорость, м/с", velocityField);
 
-        final var fpsText = new Text("Скорость анимации, кадр/с (п.у. 60)");
-        TextField fps = new TextField("60");
-        fps.setTextFormatter(NumberPatterns.UNSIGNED_INT_FORMATTER);
-        fps.setOnAction(e -> {
-            model.updateInitFps(Integer.parseInt(fps.getText()));
+        final var fpsField = makeInput(NumberPatterns.makeUnsignedIntFormatter(DEFAULT_FPS));
+        final var fpsBox = makeInputBox("Скорость анимации, кадр/с", fpsField);
+
+        final var inputs = new HBox(angleBox, heightBox, velocityBox, fpsBox);
+
+        final var enterButton = new Button("Ввести значения");
+        enterButton.setOnAction(e -> {
+            model.updateInitData(
+                    Double.parseDouble(angleField.getText()),
+                    Double.parseDouble(heightField.getText()),
+                    Double.parseDouble(velocityField.getText()),
+                    Integer.parseInt(fpsField.getText())
+            );
+            updateGraphs(model, graph, graphsStage);
         });
-        final var fpsBox = new VBox(fpsText, fps);
+
+        StackPane.setAlignment(inputs, Pos.TOP_CENTER);
+        StackPane.setAlignment(enterButton, Pos.BOTTOM_CENTER);
+        final var inputBox = new StackPane(inputs);
 
         final var startButton = new Button("Запустить модель");
         startButton.setOnAction(e -> {
             animationStarted[0] = true;
+            startButton.setDisable(true);
+            enterButton.setDisable(true);
         });
 
-        HBox inputs = new HBox(v, height, angle, fps);
-        StackPane.setAlignment(inputs, Pos.CENTER);
-        StackPane.setAlignment(startButton, Pos.BOTTOM_CENTER);
+        final var showGraphs = new Button("Показать графики");
+        showGraphs.setOnAction(e -> {
+            graphsStage.show();
+        });
 
-        gui.getChildren().add(inputs);
-        gui.getChildren().add(startButton);
+        StackPane.setAlignment(startButton, Pos.TOP_LEFT);
+        StackPane.setAlignment(showGraphs, Pos.TOP_RIGHT);
+        final var startBox = new StackPane(startButton, showGraphs);
 
+        StackPane.setAlignment(inputBox, Pos.TOP_LEFT);
+        StackPane.setAlignment(startBox, Pos.BOTTOM_LEFT);
+        gui.getChildren().add(inputBox);
+        gui.getChildren().add(startBox);
+
+        StackPane.setAlignment(gui, Pos.BOTTOM_CENTER);
         root.getChildren().add(gui);
 
         final var animation = new AnimationTimer() {
@@ -99,16 +128,26 @@ public final class BMApplication extends Application {
                     } else {
                         animationStarted[0] = false;
                     }
+                } else if (enterButton.isDisabled() || startButton.isDisabled()) {
+                    enterButton.setDisable(false);
+                    startButton.setDisable(false);
                 }
+                gui.setMaxSize(root.getWidth(), root.getHeight() / 3.5);
+
+                inputBox.setMaxHeight(inputs.getHeight());
+                inputBox.setMaxWidth(inputs.getWidth());
+                //inputBox.relocate(gui.getWidth() / 2 - inputBox.getWidth() / 2, 0);
+
+                startBox.setMaxWidth(startButton.getWidth() + showGraphs.getWidth() + 100);
+
                 graph.adjustSize(root);
-                graph.setFrame(model.frames, model.calculateMaxFramesAmount());
+                graph.setFrame(model.getFrames(), model.calculateMaxFramesAmount());
             }
         };
 
         animation.start();
         final var scene = new Scene(root);
         stage.setScene(scene);
-        graphsStage.show();
         stage.show();
     }
 

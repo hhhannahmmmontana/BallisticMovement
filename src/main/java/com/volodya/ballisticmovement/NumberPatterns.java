@@ -82,19 +82,27 @@ public final class NumberPatterns {
         }
     };
 
-    public final static TextFormatter<Double> UNSIGNED_DOUBLE_FORMATTER = new TextFormatter<>(
+    public static TextFormatter<Double> makeUnsignedDoubleFormatter(Double defaultValue) {
+        return new TextFormatter<>(
             UNSIGNED_DOUBLE_CONVERTER,
-            0.0,
+            defaultValue,
             makeFilter(INPUT_UNSIGNED_DOUBLE_PATTERN)
-    );
-    public final static TextFormatter<Double> SIGNED_DOUBLE_FORMATTER = new TextFormatter<>(
-            SIGNED_DOUBLE_CONVERTER,
-            0.0,
-            makeFilter(INPUT_SIGNED_DOUBLE_PATTERN)
-    );
-    public final static TextFormatter<Integer> UNSIGNED_INT_FORMATTER = new TextFormatter<>(
-            UNSIGNED_INT_CONVERTER,
-            0,
-            makeFilter(INPUT_UNSIGNED_INT_PATTERN)
-    );
+        );
+    }
+
+    public static TextFormatter<Double> makeSignedDoubleFormatter(Double defaultValue) {
+        return new TextFormatter<>(
+                SIGNED_DOUBLE_CONVERTER,
+                defaultValue,
+                makeFilter(INPUT_SIGNED_DOUBLE_PATTERN)
+        );
+    }
+
+    public static TextFormatter<Integer> makeUnsignedIntFormatter(Integer defaultValue) {
+        return new TextFormatter<>(
+                UNSIGNED_INT_CONVERTER,
+                defaultValue,
+                makeFilter(INPUT_UNSIGNED_INT_PATTERN)
+        );
+    }
 }
