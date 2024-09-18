@@ -1,3 +1,7 @@
 Manifest-Version: 1.0
-Main-Class: com.volodya.ballisticmovement.BMApplication
+Main-Class: com.volodya.ballisticmovement.Launcher
+Class-Path: javafx-fxml-22.0.1-win.jar javafx-fxml-22.0.1.jar javafx-con
+ trols-22.0.1-win.jar javafx-controls-22.0.1.jar javafx-graphics-22.0.1.
+ jar javafx-base-22.0.1-win.jar javafx-graphics-22.0.1-win.jar javafx-ba
+ se-22.0.1.jar
 
