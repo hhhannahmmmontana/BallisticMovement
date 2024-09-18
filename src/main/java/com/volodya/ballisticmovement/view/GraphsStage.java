@@ -25,6 +25,8 @@ public class GraphsStage extends Stage {
     }
 
     private static NumberAxis makeAxis(double minValue, double maxValue) {
+        minValue = Math.floor(minValue);
+        maxValue = Math.ceil(maxValue);
         final var axis = new NumberAxis();
         axis.setAutoRanging(false);
         if (maxValue >= minValue) {

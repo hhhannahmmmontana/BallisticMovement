@@ -21,7 +21,7 @@ public final class BMApplication extends Application {
     final static double WINDOW_HEIGHT = 500;
     final private static double DEFAULT_ANGLE = 45;
     final private static double DEFAULT_HEIGHT = 2;
-    final private static double DEFAULT_VELOCITY = 30;
+    final private static double DEFAULT_VELOCITY = 10;
     final private static int DEFAULT_FPS = 60;
 
     private<T> TextField makeInput(TextFormatter<T> formatter) {
@@ -75,6 +75,7 @@ public final class BMApplication extends Application {
         final var fpsBox = makeInputBox("Скорость анимации, кадр/с", fpsField);
 
         final var inputs = new HBox(angleBox, heightBox, velocityBox, fpsBox);
+        inputs.setAlignment(Pos.TOP_CENTER);
 
         final var enterButton = new Button("Ввести значения");
         enterButton.setOnAction(e -> {
@@ -87,16 +88,27 @@ public final class BMApplication extends Application {
             updateGraphs(model, graph, graphsStage);
         });
 
-        StackPane.setAlignment(inputs, Pos.TOP_CENTER);
-        StackPane.setAlignment(enterButton, Pos.BOTTOM_CENTER);
-        final var inputBox = new StackPane(inputs);
+        StackPane.setAlignment(enterButton, Pos.CENTER);
+        final var inputBox = new StackPane(inputs, enterButton);
 
         final var startButton = new Button("Запустить модель");
         startButton.setOnAction(e -> {
-            animationStarted[0] = true;
-            startButton.setDisable(true);
-            enterButton.setDisable(true);
+            if (animationStarted[0]) {
+                startButton.setText("Запустить модель");
+            } else {
+                startButton.setText("Пауза");
+            }
+            animationStarted[0] = !animationStarted[0];
+            enterButton.setDisable(animationStarted[0]);
         });
+
+        final var stopButton = new Button("Остановить модель");
+        stopButton.setOnAction(e -> {
+            startButton.getOnAction().handle(e);
+            enterButton.getOnAction().handle(e);
+            stopButton.setDisable(true);
+        });
+        stopButton.setDisable(true);
 
         final var showGraphs = new Button("Показать графики");
         showGraphs.setOnAction(e -> {
@@ -104,11 +116,12 @@ public final class BMApplication extends Application {
         });
 
         StackPane.setAlignment(startButton, Pos.TOP_LEFT);
+        StackPane.setAlignment(stopButton, Pos.TOP_CENTER);
         StackPane.setAlignment(showGraphs, Pos.TOP_RIGHT);
-        final var startBox = new StackPane(startButton, showGraphs);
+        final var startBox = new StackPane(startButton, stopButton, showGraphs);
 
-        StackPane.setAlignment(inputBox, Pos.TOP_LEFT);
-        StackPane.setAlignment(startBox, Pos.BOTTOM_LEFT);
+        StackPane.setAlignment(inputBox, Pos.TOP_CENTER);
+        StackPane.setAlignment(startBox, Pos.BOTTOM_CENTER);
         gui.getChildren().add(inputBox);
         gui.getChildren().add(startBox);
 
@@ -119,6 +132,9 @@ public final class BMApplication extends Application {
             @Override
             public void handle(long l) {
                 if (animationStarted[0]) {
+                    if (stopButton.isDisabled()) {
+                        stopButton.setDisable(false);
+                    }
                     if (model.isFlying()) {
                         model.applyVelocity();
                         if (model.peak()) {
@@ -128,17 +144,18 @@ public final class BMApplication extends Application {
                     } else {
                         animationStarted[0] = false;
                     }
-                } else if (enterButton.isDisabled() || startButton.isDisabled()) {
+                } else if (enterButton.isDisabled() || !stopButton.isDisabled()) {
+                    startButton.setText("Запустить модель");
+                    stopButton.setDisable(true);
                     enterButton.setDisable(false);
-                    startButton.setDisable(false);
                 }
+                gui.setMinSize(root.getWidth(), root.getHeight() / 3.5);
                 gui.setMaxSize(root.getWidth(), root.getHeight() / 3.5);
 
-                inputBox.setMaxHeight(inputs.getHeight());
-                inputBox.setMaxWidth(inputs.getWidth());
-                //inputBox.relocate(gui.getWidth() / 2 - inputBox.getWidth() / 2, 0);
+                inputBox.setMinWidth(gui.getWidth());
+                inputBox.setMaxWidth(gui.getWidth());
 
-                startBox.setMaxWidth(startButton.getWidth() + showGraphs.getWidth() + 100);
+                startBox.setMaxSize(gui.getWidth(), startButton.getHeight());
 
                 graph.adjustSize(root);
                 graph.setFrame(model.getFrames(), model.calculateMaxFramesAmount());
